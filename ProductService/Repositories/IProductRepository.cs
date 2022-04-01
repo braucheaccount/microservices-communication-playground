@@ -16,5 +16,7 @@ namespace ProductService.Repositories
         Task<Product> CreateProductAsync(Product newProduct);
 
         Task DeleteProductAsync(Guid id);
+
+        Task<Product> UpdateProductAsync(Product updatedProduct);
     }
 }

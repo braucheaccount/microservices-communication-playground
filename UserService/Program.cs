@@ -1,4 +1,7 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using SharedLogic;
+using SharedLogic.Models;
 using UserService.Data;
 using UserService.Repositories;
 
@@ -19,6 +22,30 @@ builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.Configure<RouteOptions>(opts =>
 {
     opts.LowercaseUrls = true;
+});
+
+builder.Services.AddMassTransit(x =>
+{
+    // request only
+    x.AddRequestClient<RequestResponse>();
+
+
+    x.UsingRabbitMq((context, config) =>
+    {
+        // send
+        config.Host(new Uri($"{RabbitMqSettings.RabbitMqUri}/queue:send-example-queue"), h =>
+        {
+            h.Username(RabbitMqSettings.Username);
+            h.Password(RabbitMqSettings.Password);
+        });
+
+        // publish
+        config.Host(new Uri(RabbitMqSettings.RabbitMqUri), h =>
+        {
+            h.Username(RabbitMqSettings.Username);
+            h.Password(RabbitMqSettings.Password);
+        });
+    });
 });
 
 var app = builder.Build();
