@@ -1,33 +1,29 @@
 # microservices-communication-playground
 
-> RabbitMQ is installed locally.
-
-Inside UserService/Controllers/UsersController we have different endpoints for
-
----
+> RabbitMQ is installed locally and running at http://localhost:15672/#/
 
 ### Publish
 
-> Send a message to all listeners
+_Send a message to all listeners_
 
 ### Send
 
-> Send a message to a particular endpoint
+_Send a message to a particular endpoint_
 
 ### Request/Response
 
-> Send a message, process it and return the altered message
+_Send a message, process it and return the altered message_
 
 ### Exception
 
-> Handles Exception with Faults
+_Handles Exception with Faults_
 
----
+### State Machine
 
-### Saga Orchestration
+_The **OrderStateMachine** is an example of an orchestrated saga_
 
-> The flow for **OrderStateMachine** consits of
->
-> - creating an order _OrderCreatedEvent_
-> - check if product is available _ProductReservedEvent_ or _ProductNotReservedEvent_
-> - proceed to _ShipmentEvent_
+[MassTransit Automatonymous](https://masstransit-project.com/usage/sagas/automatonymous.html#introduction)
+
+[Order, Payment, Stock State Machine](https://github.com/neisburak/net-saga-orchestration)
+
+[Travel State Machine](https://github.com/brunocasarotti/sample-state-machine-sagas)

@@ -13,10 +13,12 @@ namespace ProductService.Consumers
     public class ReserveProductConsumer : IConsumer<IReserveProductCommand>
     {
         private readonly IPublishEndpoint _publishEndpoint;
+        private readonly ILogger<IPublishEndpoint> _logger;
 
-        public ReserveProductConsumer(IPublishEndpoint publishEndpoint)
+        public ReserveProductConsumer(IPublishEndpoint publishEndpoint, ILogger<IPublishEndpoint> logger)
         {
             _publishEndpoint = publishEndpoint;
+            _logger = logger;
         }
 
         public async Task Consume(ConsumeContext<IReserveProductCommand> context)
@@ -24,16 +26,16 @@ namespace ProductService.Consumers
             var isInStock = true;
             var message = context.Message;
 
+            _logger.LogInformation($"checking if {message.ProductIds.Count()} product are in stock");
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            _logger.LogInformation($"checkin complete - products {(isInStock ? "" : "not")} in stock");
+
             if (isInStock)
             {
                 await _publishEndpoint.Publish<IProductReservedEvent>(new
                 {
                     CorrelationId = message.CorrelationId,
-                    ProductIds = new List<Guid>
-                    {
-                        Guid.NewGuid(),
-                        Guid.NewGuid(),
-                    }
+                    ProductIds = message.ProductIds
                 });
             }
             else
@@ -41,7 +43,7 @@ namespace ProductService.Consumers
                 await _publishEndpoint.Publish<IProductNotReservedEvent>(new
                 {
                     CorrelationId = message.CorrelationId,
-                    Problem = "Quantity = 0 !"
+                    Problem = "not all products are in stock !"
                 });
             }
             

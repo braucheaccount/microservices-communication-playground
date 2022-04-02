@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace SharedLogic.Saga
 {
-    public class TestResponse
+    public interface ICheckOrderEvent
     {
-        public Guid UserId { get; set; }
+        Guid OrderId { get; }
     }
 }

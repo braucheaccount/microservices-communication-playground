@@ -22,18 +22,43 @@ namespace UserService.Controllers
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly IBus _bus;
         private readonly IRequestClient<RequestRequest> _requestClient;
+        private readonly IRequestClient<CheckOrderRequest> _checkOrderRequestClient;
 
         public UsersController(
             IUserRepository userRepository,
             IPublishEndpoint publishEndpoint,
             IBus bus,
-            IRequestClient<RequestRequest> requestClient
+            IRequestClient<RequestRequest> requestClient,
+            IRequestClient<CheckOrderRequest> checkOrderRequestClient
             )
         {
             _userRepository = userRepository;
             _publishEndpoint = publishEndpoint;
             _bus = bus;
             _requestClient = requestClient;
+            _checkOrderRequestClient = checkOrderRequestClient;
+        }
+
+        [HttpGet]
+        [Route("check")]
+        public async Task<IActionResult> Check()
+        {
+            // checks the data for the created saga below (the request is 5 seconds valid after creating the saga)
+            var id = Guid.Parse("7ef12325-13e1-48c3-bb2c-e3f4979c7649");
+            var data = new CheckOrderRequest
+            {
+                OrderId = id
+            };
+
+            var (status, notFound) = await _checkOrderRequestClient.GetResponse<CheckOrderStatusResponse, OrderNotFoundResponse>(data);
+            if(status.IsCompletedSuccessfully)
+            {
+                var response = await status;
+                return Ok(response);
+            }
+
+            var responseNotFound = await notFound;
+            return NotFound(responseNotFound);
         }
 
         [HttpPost]
@@ -43,17 +68,13 @@ namespace UserService.Controllers
             var newOrderId = Guid.Parse("7ef12325-13e1-48c3-bb2c-e3f4979c7649");
             var existingUserId = Guid.Parse("7ef12325-13e1-48c3-bb2c-e3f4979c1337");
 
-      
             await _publishEndpoint.Publish<IOrderCreatedEvent>(new
             {
                 OrderId = newOrderId,
                 UserId = existingUserId
             });
 
-
-
-
-            return Ok();
+            return Accepted();
         }
 
         [HttpPost]

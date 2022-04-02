@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace SharedLogic.Saga
 {
-    public class OrderCreatedEvent : IOrderCreatedEvent
+    public interface IOrderNotFoundEvent
     {
-        public Guid OrderId { get; set; }
+        Guid OrderId { get; }
 
-        public Guid UserId { get; set; }
+        string Message { get; }
     }
 }

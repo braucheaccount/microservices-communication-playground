@@ -34,19 +34,21 @@ builder.Services.AddMassTransit(x =>
 
     // request only
     x.AddRequestClient<RequestResponse>();
-    x.AddRequestClient<TestResponse>();
+
+    x.AddRequestClient<CheckOrderStatusResponse>();
+    x.AddRequestClient<OrderNotFoundResponse>();
 
 
     x.UsingRabbitMq((context, config) =>
     {
-        // send specific
+        // -- send specific
         config.Host(new Uri("rabbitmq://localhost/queue:send-example-queue"), h =>
         {
             h.Username(RabbitMqSettings.Username);
             h.Password(RabbitMqSettings.Password);
         });
 
-        // publish specific
+        // -- publish specific
         config.Host(new Uri("rabbitmq://localhost"), h =>
         {
             h.Username(RabbitMqSettings.Username);
@@ -54,7 +56,7 @@ builder.Services.AddMassTransit(x =>
 
         });
 
-        // saga specific
+        // -- saga specific
         config.ReceiveEndpoint("order.saga", e =>
         {
             e.ConfigureSaga<OrderStateInstance>(context);

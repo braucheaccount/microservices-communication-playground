@@ -10,13 +10,21 @@ namespace ShipmentService.Consumers
 {
     public class ShipmentConsumer : IConsumer<IShipmentCommand>
     {
-        public Task Consume(ConsumeContext<IShipmentCommand> context)
+        private readonly ILogger<ShipmentConsumer> _logger;
+
+        public ShipmentConsumer(ILogger<ShipmentConsumer> logger)
         {
-            var message = context.Message;
+            _logger = logger;
+        }
 
+        public async Task Consume(ConsumeContext<IShipmentCommand> context)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(5));
+
+            var data = context.Message;
+            _logger.LogInformation($"shipment for {data.ProductIds.Count()} products to customer {data.UserId}");
             // make the shipment ready..
-
-            return Task.CompletedTask;
+            
         }
     }
 }
