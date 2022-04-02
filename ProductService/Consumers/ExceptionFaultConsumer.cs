@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ProductService.Consumers
 {
-    // alternativly: IConsumer<Fault> to listen for any exception (gets everything except the exception message)
+    // alternatively: IConsumer<Fault> to listen for any exception (gets everything except the exception message)
     public class ExceptionFaultConsumer : IConsumer<Fault<ExceptionRequest>> 
     {
         private readonly ILogger<ExceptionFaultConsumer> _logger;

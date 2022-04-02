@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ProductService
 {
-    public class MyBackgroundService : BackgroundService, IConsumer<Fault<ExceptionRequest>>
+    public class MyBackgroundService : BackgroundService
     {
         private readonly ILogger<MyBackgroundService> _logger;
 
@@ -23,7 +23,7 @@ namespace ProductService
             while(!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Checking Exception Queue..");
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                await Task.Delay(10000, stoppingToken);
             }
         }
 
@@ -32,11 +32,6 @@ namespace ProductService
             _logger.LogInformation("Stopping the BackgroundService now..");
             return base.StopAsync(cancellationToken);
         }
-
-        public Task Consume(ConsumeContext<Fault<ExceptionRequest>> context)
-        {
-            var data = context.Message;
-            throw new NotImplementedException();
-        }
+    
     }
 }

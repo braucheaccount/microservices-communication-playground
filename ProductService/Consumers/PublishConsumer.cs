@@ -31,7 +31,7 @@ namespace ProductService.Consumers
 
 
             // send request further
-            var endpoint = await context.GetSendEndpoint(new Uri($"{RabbitMqSettings.RabbitMqUri}/queue:send-example-queue"));
+            var endpoint = await context.GetSendEndpoint(new Uri("rabbitmq://localhost/queue:send-example-queue"));
 
             await endpoint.Send(new SendRequest
             {

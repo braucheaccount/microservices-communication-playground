@@ -2,8 +2,10 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using SharedLogic;
 using SharedLogic.Models;
+using SharedLogic.Saga;
 using UserService.Data;
 using UserService.Repositories;
+using UserService.StateMachines;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,25 +28,38 @@ builder.Services.Configure<RouteOptions>(opts =>
 
 builder.Services.AddMassTransit(x =>
 {
+
+    x.AddSagaStateMachine<OrderStateMachine, OrderStateInstance>()
+        .InMemoryRepository();
+
     // request only
     x.AddRequestClient<RequestResponse>();
+    x.AddRequestClient<TestResponse>();
 
 
     x.UsingRabbitMq((context, config) =>
     {
-        // send
-        config.Host(new Uri($"{RabbitMqSettings.RabbitMqUri}/queue:send-example-queue"), h =>
+        // send specific
+        config.Host(new Uri("rabbitmq://localhost/queue:send-example-queue"), h =>
         {
             h.Username(RabbitMqSettings.Username);
             h.Password(RabbitMqSettings.Password);
         });
 
-        // publish
-        config.Host(new Uri(RabbitMqSettings.RabbitMqUri), h =>
+        // publish specific
+        config.Host(new Uri("rabbitmq://localhost"), h =>
         {
             h.Username(RabbitMqSettings.Username);
             h.Password(RabbitMqSettings.Password);
+
         });
+
+        // saga specific
+        config.ReceiveEndpoint("order.saga", e =>
+        {
+            e.ConfigureSaga<OrderStateInstance>(context);
+        });
+
     });
 });
 

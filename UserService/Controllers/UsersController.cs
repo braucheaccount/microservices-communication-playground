@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SharedLogic;
 using SharedLogic.Models;
+using SharedLogic.Saga;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,14 +21,43 @@ namespace UserService.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly IBus _bus;
+        private readonly ISendEndpoint _sendEndpoint;
         private readonly IRequestClient<RequestRequest> _requestClient;
+        private readonly IRequestClient<OrderCreatedEvent> _sagaRequestClient;
 
-        public UsersController(IUserRepository userRepository, IPublishEndpoint publishEndpoint, IBus bus, IRequestClient<RequestRequest> requestClient)
+        public UsersController(
+            IUserRepository userRepository,
+            IPublishEndpoint publishEndpoint,
+            IBus bus,
+            ISendEndpointProvider sendEndpointProvider,
+            IRequestClient<RequestRequest> requestClient,
+            IRequestClient<OrderCreatedEvent> sagaRequestClient
+            )
         {
             _userRepository = userRepository;
             _publishEndpoint = publishEndpoint;
             _bus = bus;
+            _sendEndpoint = sendEndpointProvider.GetSendEndpoint(new("queue:order.saga")).Result;
             _requestClient = requestClient;
+            _sagaRequestClient = sagaRequestClient;
+        }
+
+        [HttpPost]
+        [Route("saga")]
+        public async Task<IActionResult> Purchase()
+        {
+            var newOrderId = Guid.Parse("7ef12325-13e1-48c3-bb2c-e3f4979c7649");
+            var existingUserId = Guid.Parse("7ef12325-13e1-48c3-bb2c-e3f4979c1337");
+
+            await _sendEndpoint.Send<IOrderCreatedEvent>(new
+            {
+                OrderId = newOrderId,
+                UserId = existingUserId
+            });
+
+        
+
+            return Ok();
         }
 
         [HttpPost]
@@ -84,7 +114,7 @@ namespace UserService.Controllers
                 SendMessage = "I am send to a particular endpoint",
             };
 
-            var endpoint = await _bus.GetSendEndpoint(new Uri($"{RabbitMqSettings.RabbitMqUri}/queue:send-example-queue"));
+            var endpoint = await _bus.GetSendEndpoint(new Uri("rabbitmq://localhost/queue:send-example-queue"));
 
             // send goes directly to one specific endpoint
             await endpoint.Send(newRequest);

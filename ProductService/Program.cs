@@ -37,20 +37,36 @@ builder.Services.AddTransient<IProductRepository, ProductRepository>();
 builder.Services.AddMassTransit(x =>
 {
     // add a single consumer
-    //x.AddConsumer<PublishConsumer>();
-    //x.AddConsumer<SendConsumer>();
-    //x.AddConsumer<RequestConsumer>();
+    x.AddConsumer<PublishConsumer>();
+    x.AddConsumer<SendConsumer>();
+    x.AddConsumer<RequestConsumer>();
+    x.AddConsumer<ExceptionConsumer>();
+    x.AddConsumer<ExceptionFaultConsumer>();
+
+    x.AddConsumer<ReserveProductConsumer>();
+    x.AddConsumer<OrderFailedConsumer>();
 
     // or add all consumers in a specified assembly automatically
-    x.AddConsumers(Assembly.GetEntryAssembly());
+    //x.AddConsumers(Assembly.GetEntryAssembly());
 
     x.UsingRabbitMq((context, config) =>
     {
         // default rabbitmq setup
-        config.Host(new Uri(RabbitMqSettings.RabbitMqUri), h =>
+        config.Host(new Uri("rabbitmq://localhost"), h =>
         {
             h.Username(RabbitMqSettings.Username);
             h.Password(RabbitMqSettings.Password);
+        });
+
+         // -- saga endpoints
+        config.ReceiveEndpoint("product.order.received", e =>
+        {
+            e.ConfigureConsumer<ReserveProductConsumer>(context);
+        });
+        
+        config.ReceiveEndpoint("product.order.failed", e =>
+        {
+            e.ConfigureConsumer<OrderFailedConsumer>(context);
         });
 
 
@@ -62,28 +78,28 @@ builder.Services.AddMassTransit(x =>
 
 
         // -- publish example configuration
-        config.ReceiveEndpoint("queue:request-example-queue", e =>
+        config.ReceiveEndpoint("request-example-queue", e =>
         {
             e.ConfigureConsumer<PublishConsumer>(context);
         });
 
 
         // -- request response example
-        config.ReceiveEndpoint("queue:request-response-example-queue", e =>
+        config.ReceiveEndpoint("request-response-example-queue", e =>
         {
             e.ConfigureConsumer<RequestConsumer>(context);
         });
 
 
         // -- exception example
-        config.ReceiveEndpoint("queue:exception-example-queue", e =>
+        config.ReceiveEndpoint("exception-example-queue", e =>
         {
             e.ConfigureConsumer<ExceptionConsumer>(context);
-            e.ConfigureConsumer<ExceptionFaultConsumer>(context);
+            //e.ConfigureConsumer<ExceptionFaultConsumer>(context);
         });
 
         // listen for exception and handle the problem
-        config.ReceiveEndpoint("queue:exception-example-queue_error", e =>
+        config.ReceiveEndpoint("exception-example-queue_error", e =>
         {
             e.ConfigureConsumer<ExceptionFaultConsumer>(context);
         });
