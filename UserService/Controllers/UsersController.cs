@@ -21,41 +21,37 @@ namespace UserService.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly IBus _bus;
-        private readonly ISendEndpoint _sendEndpoint;
         private readonly IRequestClient<RequestRequest> _requestClient;
-        private readonly IRequestClient<OrderCreatedEvent> _sagaRequestClient;
 
         public UsersController(
             IUserRepository userRepository,
             IPublishEndpoint publishEndpoint,
             IBus bus,
-            ISendEndpointProvider sendEndpointProvider,
-            IRequestClient<RequestRequest> requestClient,
-            IRequestClient<OrderCreatedEvent> sagaRequestClient
+            IRequestClient<RequestRequest> requestClient
             )
         {
             _userRepository = userRepository;
             _publishEndpoint = publishEndpoint;
             _bus = bus;
-            _sendEndpoint = sendEndpointProvider.GetSendEndpoint(new("queue:order.saga")).Result;
             _requestClient = requestClient;
-            _sagaRequestClient = sagaRequestClient;
         }
 
         [HttpPost]
         [Route("saga")]
-        public async Task<IActionResult> Purchase()
+        public async Task<IActionResult> Saga()
         {
             var newOrderId = Guid.Parse("7ef12325-13e1-48c3-bb2c-e3f4979c7649");
             var existingUserId = Guid.Parse("7ef12325-13e1-48c3-bb2c-e3f4979c1337");
 
-            await _sendEndpoint.Send<IOrderCreatedEvent>(new
+      
+            await _publishEndpoint.Publish<IOrderCreatedEvent>(new
             {
                 OrderId = newOrderId,
                 UserId = existingUserId
             });
 
-        
+
+
 
             return Ok();
         }
